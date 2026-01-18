@@ -13,6 +13,15 @@ public class ReShoppingCartWebAppApplication {
 				System.getProperty("spring.profiles.active",
 						System.getenv().getOrDefault("SPRING_PROFILES_ACTIVE", "prod"));
 
+		// Load base .env file first
+		applyDotenvToSystemProperties(Dotenv.configure()
+				.directory("./")
+				.filename(".env")
+				.ignoreIfMissing()
+				.ignoreIfMalformed()
+				.load());
+
+		// Load profile-specific .env file (overrides base .env)
 		applyDotenvToSystemProperties(Dotenv.configure()
 				.directory("./")
 				.filename(".env.".concat(profile))
