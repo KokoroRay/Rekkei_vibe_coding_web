@@ -18,9 +18,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          # SỬA: Dùng đúng tên biến trong ảnh DOCKER_USERNAME
+          # SỬA LẠI CHO ĐÚNG TÊN SECRET TRONG HÌNH
           username: ${{ secrets.DOCKER_USERNAME }}
-          # SỬA: Dùng đúng tên biến trong ảnh DOCKER_PASSWORD
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image to Docker Hub
@@ -28,7 +27,7 @@ jobs:
         with:
           context: .
           push: true
-          # SỬA: Thay DOCKER_USER thành DOCKER_USERNAME và dùng luôn secret DOCKER_IMAGE_NAME
+          # SỬA LẠI: Dùng DOCKER_USERNAME và DOCKER_IMAGE_NAME từ Secret
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
 
       - name: SSH into EC2 and deploy container
@@ -39,7 +38,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             echo ">>> Stopping and removing old container if exists"
-            # SỬA: Dùng biến DOCKER_IMAGE_NAME cho đồng bộ
+            # Dùng đúng biến DOCKER_IMAGE_NAME
             docker rm -f ${{ secrets.DOCKER_IMAGE_NAME }} || true
             docker rmi ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest || true
 
