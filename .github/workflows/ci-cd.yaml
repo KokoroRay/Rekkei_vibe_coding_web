@@ -18,15 +18,18 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          # SỬA: Dùng đúng tên biến trong ảnh DOCKER_USERNAME
+          username: ${{ secrets.DOCKER_USERNAME }}
+          # SỬA: Dùng đúng tên biến trong ảnh DOCKER_PASSWORD
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image to Docker Hub
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USER }}/re-shopping-cart-web-app:latest
+          # SỬA: Thay DOCKER_USER thành DOCKER_USERNAME và dùng luôn secret DOCKER_IMAGE_NAME
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
 
       - name: SSH into EC2 and deploy container
         uses: appleboy/ssh-action@v1.0.0
@@ -36,15 +39,16 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             echo ">>> Stopping and removing old container if exists"
-            docker rm -f re-shopping-cart-web-app || true
-            docker rmi ${{ secrets.DOCKER_USER }}/re-shopping-cart-web-app:latest || true
+            # SỬA: Dùng biến DOCKER_IMAGE_NAME cho đồng bộ
+            docker rm -f ${{ secrets.DOCKER_IMAGE_NAME }} || true
+            docker rmi ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest || true
 
             echo ">>> Pulling latest image from Docker Hub"
-            docker pull ${{ secrets.DOCKER_USER }}/re-shopping-cart-web-app:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
 
             echo ">>> Running container"
             docker run -d \
-              --name re-shopping-cart-web-app \
+              --name ${{ secrets.DOCKER_IMAGE_NAME }} \
               --restart unless-stopped \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
@@ -53,7 +57,7 @@ jobs:
               -e DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
               -e JAVA_OPTS="-Xms512m -Xmx512m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0" \
               -e TZ=UTC \
-              ${{ secrets.DOCKER_USER }}/re-shopping-cart-web-app:latest
+              ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
 
             echo ">>> Status & logs"
-            docker ps -a --filter "name=re-shopping-cart-web-app"
+            docker ps -a --filter "name=${{ secrets.DOCKER_IMAGE_NAME }}"
